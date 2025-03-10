@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioChat Predictor - Database Search</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; }
+        #search-container { text-align: center; margin-bottom: 20px; }
+        #search-term { padding: 5px; width: 300px; }
+        #search-button { padding: 5px 10px; }
+        .result-section { margin-top: 20px; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        #summary { margin-top: 30px; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>BioChat Predictor - Database Search</h1>
+    <div id="search-container">
+        <input type="text" id="search-term" placeholder="Enter gene ID, protein, or term (e.g., BRCA1)">
+        <button id="search-button">Search</button>
+    </div>
+
+    <div id="ensembl-results" class="result-section">
+        <h2>Ensembl Results</h2>
+    </div>
+
+    <div id="ena-results" class="result-section">
+        <h2>EBI ENA Results</h2>
+    </div>
+
+    <div id="ddbj-results" class="result-section">
+        <h2>DDBJ Results</h2>
+    </div>
+
+    <div id="uniprot-results" class="result-section">
+        <h2>UniProt Results</h2>
+    </div>
+
+    <div id="ncbi-results" class="result-section">
+        <h2>NCBI Results</h2>
+    </div>
+
+    <div id="github-results" class="result-section">
+        <h2>GitHub Results</h2>
+    </div>
+
+    <div id="summary">
+        <h2>Summary</h2>
+        <p id="summary-content">Summary information will appear here after the search.</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
