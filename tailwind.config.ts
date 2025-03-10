@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -133,13 +132,18 @@ export default {
 				shimmer: 'shimmer 2s linear infinite',
 				fadeIn: 'fadeIn 0.5s ease-out',
 				fadeInUp: 'fadeInUp 0.5s ease-out',
-				spin: 'spin 20s linear infinite'
+				spin: 'spin 20s linear infinite',
+				'spin-slow': 'spin 8s linear infinite',
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
 				'dots-pattern': 'radial-gradient(circle, #22a8f1 1px, transparent 1px)',
 				'bioez-gradient': 'linear-gradient(to right, #22a8f1, #0c86df)'
+			},
+			transitionDelay: {
+				'2000': '2000ms',
+				'4000': '4000ms',
 			}
 		}
 	},
