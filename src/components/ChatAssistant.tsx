@@ -210,7 +210,7 @@ const ChatAssistant = () => {
                       onKeyDown={handleKeyDown}
                       placeholder="Ask about protein function..."
                       className="min-h-10 resize-none border-muted bg-background"
-                      maxRows={4}
+                      rows={1}
                     />
                     <Button
                       onClick={handleSendMessage}
