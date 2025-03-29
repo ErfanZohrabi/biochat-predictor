@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Database, FileText, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import Header from '@/components/Header';
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface SearchResult {
   id: string;
@@ -22,8 +22,12 @@ interface SearchState {
   error: string | null;
 }
 
+const API_TIMEOUT = 10000; // 10 seconds timeout
+const RATE_LIMIT_DELAY = 1000; // 1 second between API calls
+
 const BioDatabaseSearch = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [rcsbState, setRcsbState] = useState<SearchState>({
     results: [],
     isLoading: false,
@@ -41,8 +45,8 @@ const BioDatabaseSearch = () => {
   });
   const [activeTab, setActiveTab] = useState('all');
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
+  const handleSearch = useCallback(async () => {
+    if (!debouncedSearchTerm.trim()) {
       return;
     }
 
@@ -51,10 +55,33 @@ const BioDatabaseSearch = () => {
     setUniprotState({ results: [], isLoading: true, error: null });
     setNcbiState({ results: [], isLoading: true, error: null });
 
-    // Search all databases concurrently
-    searchRCSB(searchTerm);
-    searchUniProt(searchTerm);
-    searchNCBI(searchTerm);
+    // Search all databases with rate limiting
+    await searchRCSB(debouncedSearchTerm);
+    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
+    await searchUniProt(debouncedSearchTerm);
+    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
+    await searchNCBI(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
+
+  useEffect(() => {
+    handleSearch();
+  }, [handleSearch]);
+
+  const searchWithTimeout = async (url: string, options: RequestInit) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
   };
 
   const searchRCSB = async (term: string) => {
@@ -70,14 +97,14 @@ const BioDatabaseSearch = () => {
         return_type: 'entry'
       };
 
-      const response = await fetch('https://search.rcsb.org/rcsbsearch/v1/query', {
+      const response = await searchWithTimeout('https://search.rcsb.org/rcsbsearch/v1/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(query)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch from RCSB PDB API');
+        throw new Error(`RCSB PDB API error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -106,18 +133,20 @@ const BioDatabaseSearch = () => {
       setRcsbState({
         results: [],
         isLoading: false,
-        error: 'Failed to fetch results from RCSB PDB'
+        error: error instanceof Error ? error.message : 'Failed to fetch results from RCSB PDB'
       });
     }
   };
 
   const searchUniProt = async (term: string) => {
     try {
-      // Using the new UniProt API format
-      const response = await fetch(`https://rest.uniprot.org/uniprotkb/search?query=${encodeURIComponent(term)}&format=json`);
+      const response = await searchWithTimeout(
+        `https://rest.uniprot.org/uniprotkb/search?query=${encodeURIComponent(term)}&format=json`,
+        {}
+      );
       
       if (!response.ok) {
-        throw new Error('Failed to fetch from UniProt API');
+        throw new Error(`UniProt API error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -154,33 +183,33 @@ const BioDatabaseSearch = () => {
       setUniprotState({
         results: [],
         isLoading: false,
-        error: 'Failed to fetch results from UniProt'
+        error: error instanceof Error ? error.message : 'Failed to fetch results from UniProt'
       });
     }
   };
 
   const searchNCBI = async (term: string) => {
     try {
-      // Search PubMed for literature
-      const response = await fetch(
-        `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=10`
+      const response = await searchWithTimeout(
+        `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=10`,
+        {}
       );
       
       if (!response.ok) {
-        throw new Error('Failed to fetch from NCBI API');
+        throw new Error(`NCBI API error: ${response.status}`);
       }
 
       const data = await response.json();
       
       if (data.esearchresult && data.esearchresult.idlist && data.esearchresult.idlist.length > 0) {
-        // Get more detailed information for each PubMed ID
         const ids = data.esearchresult.idlist.join(',');
-        const summaryResponse = await fetch(
-          `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids}&retmode=json`
+        const summaryResponse = await searchWithTimeout(
+          `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids}&retmode=json`,
+          {}
         );
         
         if (!summaryResponse.ok) {
-          throw new Error('Failed to fetch summaries from NCBI API');
+          throw new Error(`NCBI Summary API error: ${summaryResponse.status}`);
         }
         
         const summaryData = await summaryResponse.json();
@@ -221,7 +250,7 @@ const BioDatabaseSearch = () => {
       setNcbiState({
         results: [],
         isLoading: false,
-        error: 'Failed to fetch results from NCBI'
+        error: error instanceof Error ? error.message : 'Failed to fetch results from NCBI'
       });
     }
   };
