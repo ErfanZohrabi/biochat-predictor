@@ -1,83 +1,46 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, MinusCircle, Maximize2, X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { MessageCircle, Send, MinusCircle, Maximize2, X, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'assistant';
-  timestamp: Date;
-}
+import { useChatStore, ChatMessage } from '@/lib/stores/chatStore';
+import Markdown from 'react-markdown';
 
 const ChatAssistant = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: 'Hello! I\'m your BioEZ assistant. I can help you understand protein predictions and answer any questions about molecular biology.',
-      sender: 'assistant',
-      timestamp: new Date()
-    }
-  ]);
+  const { 
+    isOpen, 
+    isMinimized, 
+    messages, 
+    inputMessage, 
+    isGenerating,
+    setOpen, 
+    setMinimized, 
+    setInputMessage, 
+    sendMessage, 
+    clearMessages,
+  } = useChatStore();
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Scroll to bottom when messages change
   useEffect(() => {
-    if (chatContainerRef.current) {
+    if (chatContainerRef.current && isOpen && !isMinimized) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isOpen, isMinimized]);
 
+  // Focus textarea when chat is opened
   useEffect(() => {
-    if (isOpen && textareaRef.current) {
+    if (isOpen && !isMinimized && textareaRef.current) {
       textareaRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, isMinimized]);
 
   const handleSendMessage = () => {
-    if (!message.trim()) return;
-    
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: message,
-      sender: 'user',
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setMessage('');
-    
-    // Simulate assistant response (would be replaced with actual API call)
-    setTimeout(() => {
-      let response: string;
-      
-      if (message.toLowerCase().includes('protein') || message.toLowerCase().includes('function')) {
-        response = "Proteins function through their unique 3D structure which determines how they interact with other molecules. The function prediction is based on sequence similarity to known proteins and structural motifs.";
-      } else if (message.toLowerCase().includes('confidence') || message.toLowerCase().includes('accuracy')) {
-        response = "Our confidence score is calculated from multiple factors including sequence similarity, structural prediction accuracy, and conservation of functional domains. Scores above 90% are highly reliable.";
-      } else if (message.toLowerCase().includes('how') && message.toLowerCase().includes('work')) {
-        response = "BioEZ uses a combination of deep learning models trained on protein sequences, structures, and experimental data to predict function. We analyze motifs, domains, and evolutionary relationships to generate predictions.";
-      } else {
-        response = "I'm happy to help with your protein biology questions. Could you provide more details about what you'd like to know?";
-      }
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: response,
-        sender: 'assistant',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-    }, 1000);
+    if (!inputMessage.trim() || isGenerating) return;
+    sendMessage(inputMessage);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -88,20 +51,40 @@ const ChatAssistant = () => {
   };
 
   const toggleChat = () => {
-    setIsOpen(prev => !prev);
-    setIsMinimized(false);
-  };
-
-  const minimizeChat = () => {
-    setIsMinimized(true);
-  };
-
-  const maximizeChat = () => {
-    setIsMinimized(false);
+    setOpen(!isOpen);
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  const MessageContent = ({ content, sender }: Pick<ChatMessage, 'content' | 'sender'>) => {
+    if (sender === 'assistant') {
+      return (
+        <Markdown 
+          className="text-sm prose prose-sm dark:prose-invert max-w-none break-words"
+          components={{
+            a: ({ node, ...props }) => (
+              <a {...props} target="_blank" rel="noopener noreferrer" className="text-bioez-600 hover:underline" />
+            ),
+            code: ({ node, className, children, ...props }) => (
+              <code className="bg-muted rounded px-1 py-0.5 text-xs" {...props}>
+                {children}
+              </code>
+            ),
+            pre: ({ node, children, ...props }) => (
+              <pre className="bg-muted p-2 rounded-md my-2 overflow-x-auto text-xs" {...props}>
+                {children}
+              </pre>
+            )
+          }}
+        >
+          {content}
+        </Markdown>
+      );
+    }
+    
+    return <div className="text-sm break-words">{content}</div>;
   };
 
   return (
@@ -136,7 +119,7 @@ const ChatAssistant = () => {
                 <span className="font-medium text-sm">BioEZ Assistant</span>
                 <div className="flex ml-auto">
                   <button 
-                    onClick={maximizeChat}
+                    onClick={() => setMinimized(false)}
                     className="text-muted-foreground hover:text-foreground transition-colors"
                     aria-label="Maximize chat"
                   >
@@ -158,7 +141,7 @@ const ChatAssistant = () => {
                   <span className="font-medium">BioEZ Assistant</span>
                   <div className="flex ml-auto">
                     <button 
-                      onClick={minimizeChat}
+                      onClick={() => setMinimized(true)}
                       className="text-white/80 hover:text-white transition-colors"
                       aria-label="Minimize chat"
                     >
@@ -188,7 +171,14 @@ const ChatAssistant = () => {
                           : "bg-white shadow-sm border border-gray-100"
                       )}
                     >
-                      <div className="text-sm">{msg.content}</div>
+                      {msg.isLoading ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <MessageContent content={msg.content} sender={msg.sender} />
+                      )}
+                      
                       <div 
                         className={cn(
                           "text-xs mt-1 text-right",
@@ -205,23 +195,28 @@ const ChatAssistant = () => {
                   <div className="flex items-end gap-2">
                     <Textarea
                       ref={textareaRef}
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="Ask about protein function..."
                       className="min-h-10 resize-none border-muted bg-background"
                       rows={1}
+                      disabled={isGenerating}
                     />
                     <Button
                       onClick={handleSendMessage}
-                      disabled={!message.trim()}
+                      disabled={!inputMessage.trim() || isGenerating}
                       className={cn(
                         "shrink-0 bg-bioez-gradient hover:opacity-90 transition-opacity",
-                        !message.trim() && "opacity-70"
+                        (!inputMessage.trim() || isGenerating) && "opacity-70"
                       )}
                       size="icon"
                     >
-                      <Send className="h-4 w-4" />
+                      {isGenerating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground text-center">

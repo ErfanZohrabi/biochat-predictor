@@ -1,63 +1,154 @@
-# Welcome to your Lovable project
+# BioEZ Protein Predictor
 
-## Project info
+BioEZ is an AI-powered protein function prediction tool that analyzes protein sequences and structures to predict biological functions, identify domains, and provide relevant scientific literature.
 
-**URL**: https://lovable.dev/projects/85f12a5b-811c-47f6-8c14-1f5c5d70910d
+![BioEZ Screenshot](./public/screenshot.png)
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **AI-Powered Prediction**: Advanced deep learning models for accurate protein function prediction
+- **Multi-Format Support**: Upload FASTA, PDB, or raw sequence formats
+- **3D Structure Visualization**: Interactive molecular visualization with MolStar
+- **Domain Analysis**: Identifies functional domains and binding sites
+- **Literature Integration**: Links to relevant scientific papers
+- **Biological Database Search**: Integrated search across RCSB PDB, UniProt, NCBI PubMed, and PubChem
+- **Smart AI Assistant**: Context-aware chatbot to answer biology questions
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/85f12a5b-811c-47f6-8c14-1f5c5d70910d) and start prompting.
+- **Frontend**: React 18, TypeScript, Vite
+- **State Management**: Zustand, React Query
+- **UI Components**: Shadcn UI, Tailwind CSS, Framer Motion
+- **Visualization**: MolStar for 3D protein structures
+- **Testing**: Vitest, React Testing Library
+- **PWA Support**: Service workers for offline capability
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js 18+ or Bun
+- npm or bun package manager
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/biochat-predictor.git
+   cd biochat-predictor
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. Install dependencies:
+   ```bash
+   npm install
+   # or with bun
+   bun install
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env file with your API keys
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+4. Start development server:
+   ```bash
+   npm run dev
+   # or with bun
+   bun dev
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+5. Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## Usage
+
+### Protein Prediction
+
+1. Upload a protein file (FASTA, PDB, or raw sequence)
+2. Review the analysis results, including:
+   - Predicted function
+   - Confidence score
+   - Functional domains
+   - 3D structure visualization
+   - Related scientific literature
+
+### Database Search
+
+1. Navigate to the "Database Search" tab
+2. Enter a search term related to proteins, genes, or compounds
+3. View results from multiple biological databases:
+   - RCSB PDB (protein structures)
+   - UniProt (protein sequences)
+   - NCBI PubMed (scientific literature)
+   - PubChem (chemical compounds)
+
+### AI Assistant
+
+- Click the chat bubble icon to open the AI assistant
+- Ask questions about protein biology, prediction results, or bioinformatics concepts
+- The assistant provides context-aware responses based on your current activity
+
+## Development
+
+### Project Structure
+
+```
+biochat-predictor/
+├── public/             # Static assets
+├── src/
+│   ├── components/     # UI components
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/
+│   │   ├── api.ts      # API integration
+│   │   ├── stores/     # Zustand stores
+│   │   └── utils.ts    # Utility functions
+│   ├── pages/          # Top-level pages
+│   └── main.tsx        # Entry point
+├── .env.example        # Environment variables template
+├── vite.config.ts      # Vite configuration
+└── package.json        # Dependencies
 ```
 
-**Edit a file directly in GitHub**
+### Testing
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Run the test suite with:
 
-**Use GitHub Codespaces**
+```bash
+npm test
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+For coverage report:
 
-## What technologies are used for this project?
+```bash
+npm run test:coverage
+```
 
-This project is built with .
+### Building for Production
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+npm run build
+```
+
+The optimized build will be available in the `dist` directory.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- MolStar - for 3D molecular visualization
+- Shadcn UI - for beautiful UI components
+- The bioinformatics community for their invaluable resources
 
 

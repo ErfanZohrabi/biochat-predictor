@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useDebounce } from '@/hooks/useDebounce';
+import { proteinApi } from '@/lib/api';
 
 interface SearchResult {
   id: string;
@@ -86,28 +87,8 @@ const BioDatabaseSearch = () => {
 
   const searchRCSB = async (term: string) => {
     try {
-      const query = {
-        query: {
-          type: 'terminal',
-          service: 'text',
-          parameters: {
-            value: term
-          }
-        },
-        return_type: 'entry'
-      };
-
-      const response = await searchWithTimeout('https://search.rcsb.org/rcsbsearch/v1/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(query)
-      });
-
-      if (!response.ok) {
-        throw new Error(`RCSB PDB API error: ${response.status}`);
-      }
-
-      const data = await response.json();
+      setRcsbState({ results: [], isLoading: true, error: null });
+      const data = await proteinApi.searchRCSB(term);
       
       if (data.result_set && data.result_set.length > 0) {
         const results: SearchResult[] = data.result_set.slice(0, 10).map((entry: any) => ({
@@ -140,23 +121,15 @@ const BioDatabaseSearch = () => {
 
   const searchUniProt = async (term: string) => {
     try {
-      const response = await searchWithTimeout(
-        `https://rest.uniprot.org/uniprotkb/search?query=${encodeURIComponent(term)}&format=json`,
-        {}
-      );
-      
-      if (!response.ok) {
-        throw new Error(`UniProt API error: ${response.status}`);
-      }
-
-      const data = await response.json();
+      setUniprotState({ results: [], isLoading: true, error: null });
+      const data = await proteinApi.searchUniProt(term);
       
       if (data.results && data.results.length > 0) {
         const results: SearchResult[] = data.results.slice(0, 10).map((result: any) => {
           const accession = result.primaryAccession;
           const name = result.proteinDescription?.recommendedName?.fullName?.value || 
-                       result.proteinDescription?.submissionNames?.[0]?.fullName?.value ||
-                       'No name available';
+                      result.proteinDescription?.submissionNames?.[0]?.fullName?.value ||
+                      'No name available';
           
           return {
             id: accession,
@@ -190,47 +163,23 @@ const BioDatabaseSearch = () => {
 
   const searchNCBI = async (term: string) => {
     try {
-      const response = await searchWithTimeout(
-        `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=10`,
-        {}
-      );
+      setNcbiState({ results: [], isLoading: true, error: null });
+      const data = await proteinApi.searchNCBI(term);
       
-      if (!response.ok) {
-        throw new Error(`NCBI API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.esearchresult && data.esearchresult.idlist && data.esearchresult.idlist.length > 0) {
-        const ids = data.esearchresult.idlist.join(',');
-        const summaryResponse = await searchWithTimeout(
-          `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids}&retmode=json`,
-          {}
-        );
-        
-        if (!summaryResponse.ok) {
-          throw new Error(`NCBI Summary API error: ${summaryResponse.status}`);
-        }
-        
-        const summaryData = await summaryResponse.json();
-        
+      if (data.result && Object.keys(data.result).length > 0) {
         const results: SearchResult[] = [];
-        for (const id of data.esearchresult.idlist) {
-          if (summaryData.result && summaryData.result[id]) {
-            const article = summaryData.result[id];
-            results.push({
-              id,
-              title: article.title || `PubMed ID: ${id}`,
-              description: article.pubdate ? `Published: ${article.pubdate}` : 'No date available',
-              url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`
-            });
-          } else {
-            results.push({
-              id,
-              title: `PubMed ID: ${id}`,
-              url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`
-            });
-          }
+        
+        // Extract IDs from the data
+        const ids = Object.keys(data.result).filter(key => key !== 'uids');
+        
+        for (const id of ids) {
+          const article = data.result[id];
+          results.push({
+            id,
+            title: article.title || `PubMed ID: ${id}`,
+            description: article.pubdate ? `Published: ${article.pubdate}` : 'No date available',
+            url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`
+          });
         }
         
         setNcbiState({
