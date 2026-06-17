@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { resolve } from "path";
@@ -16,6 +17,9 @@ export default defineConfig(({ mode }: { mode: string }) => ({
     componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000,
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'BioEZ Protein Predictor',
@@ -63,10 +67,13 @@ export default defineConfig(({ mode }: { mode: string }) => ({
             'framer-motion',
           ],
           'chart': ['recharts'],
-          'mol': ['molstar'],
         },
       },
     },
     chunkSizeWarningLimit: 1000,
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
   },
 }));
