@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { chatApi } from '../api';
+import { chatAssistantApi as chatApi } from '../api';
 
 export interface ChatMessage {
   id: string;

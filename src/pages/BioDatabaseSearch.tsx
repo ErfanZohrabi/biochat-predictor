@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Database, FileText, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
@@ -91,7 +92,7 @@ const BioDatabaseSearch = () => {
       const data = await proteinApi.searchRCSB(term);
       
       if (data.result_set && data.result_set.length > 0) {
-        const results: SearchResult[] = data.result_set.slice(0, 10).map((entry: any) => ({
+        const results: SearchResult[] = data.result_set.slice(0, 10).map((entry: Record<string, unknown>) => ({
           id: entry.identifier,
           title: `PDB ID: ${entry.identifier}`,
           description: entry.title || 'No description available',
@@ -125,9 +126,10 @@ const BioDatabaseSearch = () => {
       const data = await proteinApi.searchUniProt(term);
       
       if (data.results && data.results.length > 0) {
-        const results: SearchResult[] = data.results.slice(0, 10).map((result: any) => {
-          const accession = result.primaryAccession;
-          const name = result.proteinDescription?.recommendedName?.fullName?.value || 
+        const results: SearchResult[] = data.results.slice(0, 10).map((result: Record<string, unknown>) => {
+          const accession = result.primaryAccession as string;
+          const name = (result.proteinDescription as Record<string, unknown>)?.recommendedName ? 
+            ((result.proteinDescription as Record<string, any>).recommendedName.fullName.value as string) : 
                       result.proteinDescription?.submissionNames?.[0]?.fullName?.value ||
                       'No name available';
           
