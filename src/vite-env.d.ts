@@ -4,8 +4,6 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
-  readonly VITE_API_KEY: string;
-  readonly VITE_OPENAI_API_KEY: string;
   readonly VITE_OPENAI_MODEL: string;
   readonly VITE_SENTRY_DSN: string;
   readonly VITE_ENABLE_ADVANCED_FEATURES: string;
@@ -14,7 +12,6 @@ interface ImportMetaEnv {
   readonly VITE_RCSB_API_URL: string;
   readonly VITE_UNIPROT_API_URL: string;
   readonly VITE_NCBI_API_URL: string;
-  readonly VITE_NCBI_API_KEY: string;
   readonly VITE_PUBCHEM_API_URL: string;
   readonly DEV: boolean;
   readonly MODE: string;

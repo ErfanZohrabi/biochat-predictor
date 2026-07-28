@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Database, Activity, Brain, FileText } from 'lucide-react';
 import Header from '@/components/Header';
@@ -9,48 +8,7 @@ import ProteinUploader from '@/components/ProteinUploader';
 import PredictionResults from '@/components/PredictionResults';
 import ChatAssistant from '@/components/ChatAssistant';
 
-const sampleResult = {
-  id: 'sample-1',
-  proteinName: 'Hemoglobin Beta Chain',
-  function: 'Oxygen transport protein that carries oxygen from the lungs to tissues and carbon dioxide from tissues back to lungs',
-  confidence: 97,
-  domains: [
-    { name: 'Globin domain', start: 1, end: 146, confidence: 99 },
-    { name: 'Heme binding site', start: 63, end: 99, confidence: 98 }
-  ],
-  literature: [
-    { title: 'Structure and function of hemoglobin', url: '#' },
-    { title: 'Evolutionary conservation of globin proteins', url: '#' }
-  ]
-};
-
-const mockPredict = (file: File) => {
-  // Simulating prediction process
-  console.log(`Processing file: ${file.name}`);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(sampleResult);
-    }, 3000);
-  });
-};
-
 const Index = () => {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [isPredicting, setIsPredicting] = useState(false);
-  const [predictionResult, setPredictionResult] = useState<typeof sampleResult | null>(null);
-
-  const handleUpload = (file: File) => {
-    setUploadedFile(file);
-    setIsPredicting(true);
-    setPredictionResult(null);
-    
-    // Simulate prediction process
-    mockPredict(file).then((result) => {
-      setPredictionResult(result as typeof sampleResult);
-      setIsPredicting(false);
-    });
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -142,16 +100,10 @@ const Index = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <ProteinUploader onUpload={handleUpload} />
-            
-            {(isPredicting || predictionResult) && (
-              <div className="mt-10">
-                <PredictionResults 
-                  result={predictionResult as typeof sampleResult} 
-                  isLoading={isPredicting} 
-                />
-              </div>
-            )}
+            <ProteinUploader />
+            <div className="mt-10">
+              <PredictionResults />
+            </div>
           </motion.div>
         </div>
       </section>

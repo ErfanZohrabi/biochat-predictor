@@ -3,7 +3,7 @@ import axios from 'axios';
 // Base API configuration
 const API_CONFIG = {
   prediction: {
-    baseURL: import.meta.env.VITE_API_URL || 'https://api.bioez.ai',
+    baseURL: import.meta.env.VITE_API_URL || '/api',
     timeout: 30000,
   },
   databases: {
@@ -13,7 +13,7 @@ const API_CONFIG = {
     pubchem: import.meta.env.VITE_PUBCHEM_API_URL || 'https://pubchem.ncbi.nlm.nih.gov/rest/pug',
   },
   llm: {
-    baseURL: import.meta.env.VITE_LLM_API_URL || 'https://api.openai.com/v1',
+    baseURL: import.meta.env.VITE_LLM_API_URL || '/api/llm',
     timeout: 10000,
   }
 };
@@ -89,7 +89,6 @@ const predictionApi = axios.create({
   timeout: API_CONFIG.prediction.timeout,
   headers: {
     'Content-Type': 'application/json',
-    'X-API-Key': import.meta.env.VITE_API_KEY || '',
   },
 });
 
@@ -114,11 +113,10 @@ const pubchemApi = axios.create({
 });
 
 const llmApi = axios.create({
-  baseURL: import.meta.env.VITE_LLM_API_URL || 'https://api.bioez.com/v1/chat',
+  baseURL: API_CONFIG.llm.baseURL,
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${import.meta.env.VITE_API_KEY}`
   }
 });
 
@@ -278,11 +276,6 @@ export const searchNCBI = async (query: string, database: string = 'protein') =>
       retmax: '10'
     };
     
-    // Add API key if available
-    if (import.meta.env.VITE_NCBI_API_KEY) {
-      params.api_key = import.meta.env.VITE_NCBI_API_KEY;
-    }
-    
     const response = await ncbiApi.get('/esearch.fcgi', { params });
     return response.data;
   } catch (error) {
@@ -380,13 +373,9 @@ export const proteinApi = {
 
   searchNCBI: async (term: string, database = 'pubmed', limit = 10) => {
     try {
-      // Add API key if available
-      const apiKeyParam = import.meta.env.VITE_NCBI_API_KEY ? 
-        `&api_key=${import.meta.env.VITE_NCBI_API_KEY}` : '';
-        
       // First get IDs
       const searchResponse = await axios.get(
-        `${API_CONFIG.databases.ncbi}/esearch.fcgi?db=${database}&term=${encodeURIComponent(term)}&retmode=json&retmax=${limit}${apiKeyParam}`
+        `${API_CONFIG.databases.ncbi}/esearch.fcgi?db=${database}&term=${encodeURIComponent(term)}&retmode=json&retmax=${limit}`
       );
       
       if (!searchResponse.data.esearchresult?.idlist?.length) {
@@ -396,7 +385,7 @@ export const proteinApi = {
       // Then get summaries
       const ids = searchResponse.data.esearchresult.idlist.join(',');
       const summaryResponse = await axios.get(
-        `${API_CONFIG.databases.ncbi}/esummary.fcgi?db=${database}&id=${ids}&retmode=json${apiKeyParam}`
+        `${API_CONFIG.databases.ncbi}/esummary.fcgi?db=${database}&id=${ids}&retmode=json`
       );
       
       return summaryResponse.data;
@@ -433,9 +422,7 @@ export const chatAssistantApi = {
           max_tokens: 1000
         },
         {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY || ''}`,
-            'Content-Type': 'application/json'
+          headers: {            'Content-Type': 'application/json'
           }
         }
       );

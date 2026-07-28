@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, CopyIcon, Download, ExternalLink, Share2, Dna, Clipboard, InfoIcon, Code } from 'lucide-react';
+import { CheckCircle2, CopyIcon, Download, ExternalLink, Share2, Dna, InfoIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
@@ -102,6 +102,16 @@ Domains: ${currentResult.domains.map(d => `${d.name} (${d.start}-${d.end})`).joi
     if (confidence >= 90) return 'text-success-600';
     if (confidence >= 70) return 'text-amber-500';
     return 'text-orange-500';
+  };
+
+  const isLikelyPdbContent = (structure: string) => {
+    const trimmed = structure.trimStart();
+    if (!trimmed || /^https?:\/\//i.test(trimmed)) {
+      return false;
+    }
+
+    const pdbRecordPattern = /^(HEADER|TITLE|ATOM|HETATM|MODEL|REMARK)\b/m;
+    return pdbRecordPattern.test(trimmed);
   };
 
   return (
@@ -208,7 +218,7 @@ Domains: ${currentResult.domains.map(d => `${d.name} (${d.start}-${d.end})`).joi
                 {currentResult.structure ? (
                   <ProteinViewer 
                     structure={currentResult.structure} 
-                    format={currentResult.structure.startsWith('HEADER') ? 'pdb' : 'url'}
+                    format={isLikelyPdbContent(currentResult.structure) ? 'pdb' : 'url'}
                   />
                 ) : (
                   <div className="h-full flex items-center justify-center">
